@@ -24,11 +24,12 @@ class Hotel:
     @classmethod
     def sortByRoomAvailable(cls):
         cls.sortParam = 'room'
+
 class User:
-        def __init__(self, uname='', uId=0, cost=0):
-            self.uname = uname
-            self.uId = uId
-            self.cost = cost
+    def __init__(self, uname='', uId=0, cost=0):
+        self.uname = uname
+        self.uId = uId
+        self.cost = cost
 
 class HotelManagementApp:
     def __init__(self, root):
@@ -104,9 +105,8 @@ class HotelManagementApp:
         for h in self.hotels:
             self.hotel_tree.insert('', 'end', values=(h.name, h.room, h.checkInDate, h.checkOutDate, "Yes" if h.housekeeper else "No", h.bookingCost))
 
-
     def sort_by_name(self):
-        Hotel.sortByName()
+        Hotel.sortParam = 'name'
         self.hotels.sort()
         self.update_hotel_tree()
 
@@ -177,11 +177,6 @@ class HotelManagementApp:
             messagebox.showinfo("Success", "New hotel booking added successfully!")
 
         tk.Button(new_window, text="Add Booking", command=save_hotel).grid(row=6, columnspan=2)
-    def load_users_from_db(self):
-        cursor = self.conn.execute('SELECT uname, uId, cost FROM users')
-        for row in cursor:
-            u = User(*row)
-            self.users.append(u)
 
     def insert_user_data(self):
         new_window = tk.Toplevel(self.root)
@@ -214,8 +209,37 @@ class HotelManagementApp:
 
         tk.Button(new_window, text="Add User", command=save_user).grid(row=3, columnspan=2)
 
+class LoginWindow:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Admin Login")
+        
+        tk.Label(root, text="Username").grid(row=0, column=0, padx=10, pady=10)
+        tk.Label(root, text="Password").grid(row=1, column=0, padx=10, pady=10)
+
+        self.username_entry = tk.Entry(root)
+        self.password_entry = tk.Entry(root, show='*')
+        
+        self.username_entry.grid(row=0, column=1, padx=10, pady=10)
+        self.password_entry.grid(row=1, column=1, padx=10, pady=10)
+
+        login_btn = ttk.Button(root, text="Login", command=self.check_login)
+        login_btn.grid(row=2, columnspan=2, pady=10)
+    
+    def check_login(self):
+        username = self.username_entry.get()
+        password = self.password_entry.get()
+
+        # Example hardcoded credentials
+        if username == "admin" and password == "password":
+            self.root.destroy()
+            main_app = tk.Tk()
+            app = HotelManagementApp(main_app)
+            main_app.mainloop()
+        else:
+            messagebox.showerror("Error", "Invalid credentials")
 
 if __name__ == '__main__':
-    root = tk.Tk()
-    app = HotelManagementApp(root)
-    root.mainloop()
+    login_root = tk.Tk()
+    login_app = LoginWindow(login_root)
+    login_root.mainloop()
