@@ -87,9 +87,15 @@ class HotelManagementApp:
 
         self.update_hotel_tree()
 
+        button_frame = ttk.Frame(self.tabHotelData)
+        button_frame.pack(pady=10)
+        
         insert_btn = ttk.Button(self.tabHotelData, text="Add New Hotel Booking", command=self.insert_hotel_data)
         insert_btn.pack(pady=10)
         
+        delete_btn = ttk.Button(button_frame, text="Delete Selected Booking", command=self.delete_selected_hotel)
+        delete_btn.grid(row=0, column=1, padx=5)
+
         sort_frame = ttk.Frame(self.tabHotelData)
         sort_frame.pack(pady=10)
 
@@ -104,6 +110,33 @@ class HotelManagementApp:
             self.hotel_tree.delete(item)
         for h in self.hotels:
             self.hotel_tree.insert('', 'end', values=(h.name, h.room, h.checkInDate, h.checkOutDate, "Yes" if h.housekeeper else "No", h.bookingCost))
+
+    def delete_selected_hotel(self):
+        selected_item = self.hotel_tree.selection()
+        if not selected_item:
+            messagebox.showwarning("Warning", "No hotel booking selected!")
+            return
+
+        # Confirm deletion
+        confirm = messagebox.askyesno("Confirmation", "Are you sure you want to delete the selected booking?")
+        if not confirm:
+            return
+
+        for item in selected_item:
+            hotel_values = self.hotel_tree.item(item, "values")
+            hotel_name = hotel_values[0]  # Assuming 'name' is the unique identifier for display purposes
+
+            # Delete from database
+            self.conn.execute('DELETE FROM hotels WHERE name = ?', (hotel_name,))
+            self.conn.commit()
+
+            # Remove from local list
+            self.hotels = [h for h in self.hotels if h.name != hotel_name]
+
+            # Remove from Treeview
+            self.hotel_tree.delete(item)
+
+        messagebox.showinfo("Success", "Selected hotel booking deleted successfully!")
 
     def sort_by_name(self):
         Hotel.sortParam = 'name'
