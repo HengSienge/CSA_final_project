@@ -89,7 +89,7 @@ class HotelManagementApp:
 
         button_frame = ttk.Frame(self.tabHotelData)
         button_frame.pack(pady=10)
-        
+
         insert_btn = ttk.Button(self.tabHotelData, text="Add New Hotel Booking", command=self.insert_hotel_data)
         insert_btn.pack(pady=10)
         
@@ -154,17 +154,82 @@ class HotelManagementApp:
         self.update_hotel_tree()
 
     def create_user_tab(self):
-        self.user_tree = ttk.Treeview(self.tabUserData, columns=("Name", "ID", "Cost"), show="headings")
+        self.user_tree = ttk.Treeview(
+            self.tabUserData, 
+            columns=("Name", "ID", "Cost"), 
+            show="headings"
+        )
         self.user_tree.heading("Name", text="Customer Name")
         self.user_tree.heading("ID", text="Customer ID")
         self.user_tree.heading("Cost", text="Booking Cost")
         self.user_tree.pack(expand=True, fill='both')
 
+        self.update_user_tree()
+        button_frame = ttk.Frame(self.tabUserData)
+        button_frame.pack(pady=10)
+
+        insert_user_btn = ttk.Button(button_frame, text="Add New Customer", command=self.insert_user_data)
+        insert_user_btn.grid(row=0, column=0, padx=5)
+
+        delete_user_btn = ttk.Button(button_frame, text="Delete Selected Customer", command=self.delete_selected_user)
+        delete_user_btn.grid(row=0, column=1, padx=5)
+
+        btn_sort_name = ttk.Button(button_frame, text="Sort by Name", command=self.sort_users_by_name)
+        btn_sort_name.grid(row=0, column=2, padx=5)
+
+        btn_sort_cost = ttk.Button(button_frame, text="Sort by Booking Cost", command=self.sort_users_by_cost)
+        btn_sort_cost.grid(row=0, column=3, padx=5)
+
+    def update_user_tree(self):
+        for item in self.user_tree.get_children():
+            self.user_tree.delete(item)
         for u in self.users:
             self.user_tree.insert('', 'end', values=(u.uname, u.uId, u.cost))
 
-        insert_user_btn = ttk.Button(self.tabUserData, text="Add New Customer", command=self.insert_user_data)
-        insert_user_btn.pack(pady=10)
+    def delete_selected_user(self):
+        selected_item = self.user_tree.selection()
+        if not selected_item:
+            messagebox.showwarning("Warning", "No customer selected!")
+            return
+
+        confirm = messagebox.askyesno("Confirmation", "Are you sure you want to delete the selected customer?")
+        if not confirm:
+            return
+
+        for item in selected_item:
+            user_values = self.user_tree.item(item, "values")
+            user_id = user_values[1]  # Assuming 'uId' is unique for each user
+
+            # Delete from database
+            self.conn.execute('DELETE FROM users WHERE uId = ?', (user_id,))
+            self.conn.commit()
+
+            # Remove from local list
+            self.users = [u for u in self.users if u.uId != user_id]
+
+            # Remove from Treeview
+            self.user_tree.delete(item)
+
+        messagebox.showinfo("Success", "Selected customer deleted successfully!")
+
+    def sort_users_by_name(self):
+        self.users.sort(key=lambda u: u.uname.lower())
+        self.update_user_tree()
+
+    def sort_users_by_cost(self):
+        self.users.sort(key=lambda u: u.cost)
+        self.update_user_tree()
+
+    def load_data_from_db(self):
+        cursor = self.conn.execute('SELECT name, room, checkInDate, checkOutDate, housekeeper, bookingCost FROM hotels')
+        for row in cursor:
+            h = Hotel(*row)
+            self.hotels.append(h)
+
+        cursor = self.conn.execute('SELECT uname, uId, cost FROM users')
+        for row in cursor:
+            u = User(*row)
+            self.users.append(u)
 
     def insert_hotel_data(self):
         new_window = tk.Toplevel(self.root)
