@@ -99,12 +99,21 @@ class HotelManagementApp:
         sort_frame = ttk.Frame(self.tabHotelData)
         sort_frame.pack(pady=10)
 
-        btn_sort_name = ttk.Button(sort_frame, text="Sort by Name", command=self.sort_by_name)
+        btn_sort_name = ttk.Button(sort_frame, text="Sort by Room available", command=self.sort_by_name)
         btn_sort_name.grid(row=0, column=0, padx=5)
 
         btn_sort_rating = ttk.Button(sort_frame, text="Sort by Rating", command=self.sort_by_rating)
         btn_sort_rating.grid(row=0, column=1, padx=5)
+    def sort_by_rating(self):
+        Hotel.sortByRate()
+        self.hotels.sort()
+        self.update_hotel_tree()
 
+    def sort_by_rooms(self):
+        Hotel.sortByRoomAvailable()
+        self.hotels.sort()
+        self.update_hotel_tree()
+    
     def update_hotel_tree(self):
         for item in self.hotel_tree.get_children():
             self.hotel_tree.delete(item)
